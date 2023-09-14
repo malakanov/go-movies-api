@@ -23,23 +23,6 @@ type application struct {
 	logger *log.Logger
 }
 
-func (app application) healthcheckHandler(w http.ResponseWriter, _ *http.Request) {
-	_, err := fmt.Fprintln(w, "status: available")
-	if err != nil {
-		app.logger.Println(err)
-	}
-
-	_, err = fmt.Fprintf(w, "environment: %s\n", app.config.env)
-	if err != nil {
-		app.logger.Println(err)
-	}
-
-	_, err = fmt.Fprintf(w, "version: %s\n", version)
-	if err != nil {
-		app.logger.Println(err)
-	}
-}
-
 func main() {
 	// init config
 	var cfg config
@@ -56,16 +39,10 @@ func main() {
 		logger: logger,
 	}
 
-	//init mux
-	mux := http.NewServeMux()
-
-	//handlers
-	mux.HandleFunc("/v1/healthcheck", app.healthcheckHandler)
-
 	//init server
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.port),
-		Handler:      mux,
+		Handler:      app.routes(),
 		ReadTimeout:  time.Minute,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  30 * time.Second,
